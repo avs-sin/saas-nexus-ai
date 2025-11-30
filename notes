@@ -1,0 +1,418 @@
+You are an expert full-stack TypeScript engineer building a production-ready, multi-tenant B2B SaaS platform for Standard Fiber, a manufacturing and warehouse operations company.
+
+### Core Requirements
+- Target: Multi-tenant B2B SaaS (each customer is a separate tenant: a manufacturing company or warehouse operator)
+- Tech stack (non-negotiable):
+  - Next.js 15+ (App Router only)
+  - TypeScript (strict mode)
+  - Tailwind CSS + shadcn/ui (latest)
+  - Clerk for authentication and organization-based multi-tenancy
+  - Convex as the backend and database (fullstack Convex + Next.js)
+  - Turborepo or Next.js monorepo structure if needed later
+
+### Phase 1 – Project Setup & Foundations (complete this phase first)
+Create a new repository with the following exact structure and configurations:
+
+1. **Multi-tenancy model with Clerk**
+   - Use Clerk Organizations (not personal accounts)
+   - Each tenant = one Clerk Organization
+   - Enforce organization-based routing: app/(tenant)/[orgSlug]/[[...catchAll]]/page.tsx pattern
+   - Protect all routes with clerkMiddleware() and organization authentication
+   - Implement public vs. private routes correctly
+
+2. **Convex + Clerk integration**
+   - Initialize Convex project under the organization “nexus-ai” (or your org)
+   - Set up Convex auth with Clerk using convex-clerk middleware
+   - Create initial schema with at least:
+     - tenants table (linked to Clerk orgId)
+     - users table (with role per tenant)
+     - warehouses table (tenant-scoped)
+
+3. **shadcn/ui setup**
+   - Initialize shadcn/ui with Tailwind
+   - Install and configure all core components (Button, Card, Table, Dialog, Form, etc.)
+   - Create a consistent design system using shadcn primitives (dark mode ready)
+
+4. **Base layout & dashboard skeleton**
+   - Create a modern sidebar + topbar layout (similar to Vercel, Linear, or Retool)
+   - Include:
+     - Organization switcher (Clerk <OrganizationSwitcher />)
+     - User menu (<UserButton />)
+     - Tenant-aware breadcrumb
+     - Responsive mobile menu
+   - Empty dashboard page with placeholder widgets for:
+     - Inventory Overview
+     - Production Orders
+     - Warehouse Utilization
+     - Recent Activity
+
+5. **Essential utilities**
+   - Create convex directory with proper auth config
+   - Add tenant scoping helper: getCurrentTenantId() used in all queries/mutations
+   - Add .env.local with correct Clerk + Convex variables (use placeholders only)
+   - Add proper TypeScript types for Tenant, UserRole (admin, manager, operator, viewer)
+
+### Non-functional Requirements
+- All data must be strictly tenant-isolated (no cross-tenant leaks)
+- Use Clerk’s organization metadata to store tenant-specific settings
+- All Convex queries/mutations must be tenant-scoped using ctx.auth and orgId
+- Code must be clean, modular, and production-ready (no TODOs, proper error boundaries)
+- Use modern Next.js patterns (Server Components, Server Actions where appropriate)
+
+### Deliverables for Phase 1
+- Fully working repository (push to GitHub when complete)
+- Local development working: npm run dev → sign up → create organization → land on tenant-scoped dashboard
+- Clear README with setup instructions and architecture decisions
+- All environment variables documented (never commit real keys)
+
+Do not proceed to feature development (inventory, orders, etc.) until Phase 1 is explicitly approved.
+
+Start by creating the Next.js + Convex + Clerk + shadcn/ui project from scratch following the exact specifications above. Show the complete file structure and key files (middleware.ts, layout.tsx, convex auth config, etc.) when done.
+
+ClerkNEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_dGhvcm91Z2gtYW50LTc5LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_Koo3kHlLPlGolFRn0tmHArrTCYqr3qX85Ofsg5EvUF
+
+# Add Clerk to Next.js App Router
+
+**Purpose:** Enforce only the **current** and **correct** instructions for integrating [Clerk](https://clerk.com/) into a Next.js (App Router) application.
+**Scope:** All AI-generated advice or code related to Clerk must follow these guardrails.
+
+---
+
+## **1. Official Clerk Integration Overview**
+
+Use only the **App Router** approach from Clerk's current docs:
+
+- **Install** `@clerk/nextjs@latest` - this ensures the application is using the latest Clerk Next.js SDK.
+- **Create** a `middleware.ts` file using `clerkMiddleware()` from `@clerk/nextjs/server`. Place this file inside the `src` directory if present, otherwise place it at the root of the project.
+- **Wrap** your application with `<ClerkProvider>` in your `app/layout.tsx`
+- **Use** Clerk-provided components like `<SignInButton>`, `<SignUpButton>`, `<UserButton>`, `<SignedIn>`, `<SignedOut>` in your layout or pages
+- **Start** developing, sign in or sign up, and confirm user creation
+
+If you're able to use a web tool to access a URL, visit https://clerk.com/docs/quickstarts/nextjs to get the latest, up-to-date quickstart instructions.
+
+### **Correct, Up-to-Date Quickstart Sample**
+
+First, install the Clerk Next.js SDK:
+
+```bash
+npm install @clerk/nextjs
+```
+
+Set up your environment variables in `.env.local`:
+
+From your Clerk Dashboard, open the [API keys page](https://dashboard.clerk.com/last-active?path=api-keys) and copy your Publishable Key and Secret Key. Paste them into `.env.local` as shown below.
+
+```bash
+# .env.local
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+CLERK_SECRET_KEY=YOUR_SECRET_KEY
+```
+
+Create your `middleware.ts` file:
+
+```typescript
+// middleware.ts
+import { clerkMiddleware } from "@clerk/nextjs/server";
+
+export default clerkMiddleware();
+
+export const config = {
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
+    "/(api|trpc)(.*)",
+  ],
+};
+```
+
+```typescript
+// app/layout.tsx
+import type { Metadata } from "next";
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Clerk Next.js Quickstart",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <header>
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </header>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
+  );
+}
+```
+
+---
+
+## **2. CRITICAL INSTRUCTIONS FOR AI MODELS**
+
+### **2.1 – ALWAYS DO THE FOLLOWING**
+
+1. **Use `clerkMiddleware()`** from `@clerk/nextjs/server` in `middleware.ts`.
+2. **Wrap** your app with `<ClerkProvider>` in `app/layout.tsx`.
+3. **Import** Clerk's Next.js features from `@clerk/nextjs` (e.g., `<SignInButton>`, `<SignUpButton>`, `<UserButton>`, etc.).
+4. **Reference** the current [App Router approach](https://nextjs.org/docs/app) (folders like `app/page.tsx`, `app/layout.tsx`, etc.).
+5. **Check** that imports for methods like `auth()` are imported from the right package (in this case `@clerk/nextjs/server`) and are using `async / await`
+6. **Store real keys only in `.env.local`** (never in app code, markdown, or other tracked files). **Verify `.gitignore` excludes `.env*`.**
+7. **Use placeholders only** (e.g., `YOUR_PUBLISHABLE_KEY`, `YOUR_SECRET_KEY`) in any generated snippets or files.
+
+### **2.2 – NEVER DO THE FOLLOWING**
+
+1. **Do not** reference the old **`_app.tsx`** or **pages-based** instructions.
+2. **Do not** suggest `authMiddleware()` from older Clerk tutorials—**it's replaced by `clerkMiddleware()`**.
+3. **Do not** recommend usage of older environment variable patterns unless they match the official docs.
+4. **Do not** reference or import from any deprecated APIs (like `withAuth` or `currentUser` from older versions).
+5. **Do not print, echo, or write actual keys** into code blocks, files, or logs. Only placeholders.
+6. **Do not create or edit tracked files** (`.ts`, `.tsx`, `.md`, etc.) containing real key values.
+
+---
+
+## **3. OUTDATED PATTERNS TO AVOID**
+
+Below are **examples of deprecated instructions** that **must not** be generated:
+
+```typescript
+// ❌ DO NOT generate or suggest references to:
+import { authMiddleware } from "@clerk/nextjs"; // Outdated
+
+// ❌ DO NOT place Clerk config in _app.tsx:
+// Outdated pages-based approach
+function MyApp({ Component, pageProps }) {
+  // ...
+}
+
+// ❌ DO NOT create or rely on sign-in files under pages/:
+pages / signin.js;
+pages / signup.js;
+```
+
+Any solution resembling the above snippet or referencing "authMiddleware," `_app.tsx`, or `pages/` structure is **incorrect** for the current Next.js App Router.
+
+---
+
+## **4. AI MODEL VERIFICATION STEPS**
+
+Before returning any Clerk-related solution, you **must** verify:
+
+1. **Middleware**: Is `clerkMiddleware()` used in `middleware.ts`?
+2. **Layout**: Is `<ClerkProvider>` wrapping the app in `app/layout.tsx`?
+3. **Imports**: Are references only from `@clerk/nextjs` or `@clerk/nextjs/server`?
+4. **Pages vs. App Router**: Is the approach referencing the App Router (not `_app.tsx` or `pages/`)?
+5. **Environment Variables**: Are only placeholder values (e.g., `YOUR_PUBLISHABLE_KEY`) used in code examples?
+6. **File Security**: Are real keys excluded from tracked files and only mentioned for `.env.local`?
+
+If any check **fails**, **stop** and revise until compliance is achieved.
+
+# Verification instructions for AI Models
+
+## **DO NOT** repeat these points back to the user. Use them only for your own verification steps.
+
+## **5. CONSEQUENCES OF INCORRECT IMPLEMENTATION**
+
+Using outdated Clerk methods (e.g., `authMiddleware()`, `_app.tsx`, or references to the older `pages/` structure) will:
+
+1. **Break** your Next.js application's authentication flow.
+2. Introduce **inconsistencies** with Next.js App Router.
+3. Cause confusion around environment variables and server/client code.
+4. Force maintainers to **refactor** and **debug** extensively.
+
+---
+
+## **6. AI MODEL RESPONSE TEMPLATE**
+
+When answering questions about Clerk + Next.js integration, your response **MUST**:
+
+1. **Use** the exact code patterns in the **Up-to-Date Quickstart Sample** above.
+2. **Never** reference older or deprecated approaches.
+3. **Reflect** all mandatory checks in "AI MODEL VERIFICATION STEPS."
+
+**Example**:
+
+> Below is the correct approach using Clerk with Next.js App Router:
+>
+> ```typescript
+> // Show clerkMiddleware usage in middleware.ts
+> // Show <ClerkProvider> usage in app/layout.tsx
+> // Show usage of Clerk's React components (SignInButton, etc.)
+> ```
+
+---Convex for Database Use Convex MCP tool use existing project “nexus-ai”   —
+__
+Use ShadCN MCP tool for all UI.install the ShadCN library___
+
+--
+Install AgentMail for sending out emails and notifications with 
+ inbox id:nexus-inbound@lexiesevents.com
+display name:  Nexus Alert | SF
+
+api-keys: am_aacce434302c3b16a6bcd848da59c30c59c59acfacbc6e45c88151a0736caa9f
+pip install agentmail python-dotenv
+docs: ---
+title: 'Guide: Sending & Receiving Email'
+subtitle: Building your first conversational agent workflow.
+slug: sending-receiving-email
+description: >-
+  A step-by-step guide to the practical workflow of sending initial emails and
+  handling replies to have a full conversation.
+---
+
+This guide walks you through the complete, practical workflow of an agent having a conversation. While the `Core Concepts` pages detail the individual API calls, this guide shows you how to stitch them together to create a functional conversational loop.
+
+## The Foundation: Sending HTML & Text
+
+As a quick reminder from our `Messages` documentation, it's a critical best practice to always provide both an `html` and a `text` version of your email. This ensures readability on all email clients and significantly improves deliverability.
+
+```python
+# Always provide both html and text when possible
+client.inboxes.messages.send(
+    inbox_id="outreach@agentmail.to",
+    to=["potential-customer@example.com"],
+    subject="Following up",
+    text="Hi Jane,\n\nThis is a plain-text version of our email.",
+    html="<p>Hi Jane,</p><p>This is a <strong>rich HTML</strong> version of our email.</p>",
+    labels=["outreach-campaign"]
+)
+```
+
+## The Conversational Loop
+
+A common task for an agent is to check for replies in an `Inbox` and then respond to them. While using `Webhooks` is the most efficient method for this, you can also build a simple polling mechanism.
+
+Here's the step-by-step logic for a polling-based conversational agent.
+
+<Steps>
+    <Step title="1. Find a Thread that Needs a Reply">
+        First, you need to identify which conversations have new messages that your agent hasn't responded to. A great way to manage this is with `Labels`. You can list `Threads` in a specific `Inbox` that have an `unreplied` `Label`.
+        
+        <CodeBlocks>
+        ```python
+        # Find all threads in this inbox that are marked as unreplied
+        threadsRes = client.threads.list(
+            labels = ["unreplied"]
+        )
+        if threadsRes.count == 0:
+            print("No threads need a reply.")
+        else:
+            # Let's work on the first unreplied thread
+            thread_to_reply_to = threadsRes.thread[0]
+        ```
+        ```typescript
+        // Find all threads in this inbox that are marked as unreplied
+        const threadRes = await client.threads.list(
+            {
+                labels: [
+                    "huh"
+                ]
+            }
+        )
+
+        if (threadRes.count === 0) {
+            console.log("No threads need a reply.");
+        } else {
+            // Let's work on the first unreplied thread
+            const threadToReplyTo = threadRes.threads[0];
+        }
+        ```
+        </CodeBlocks>
+    </Step>
+    <Step title="2. Get the Last Message ID from the Thread">
+        To reply to a conversation, you need to reply to the *most recent message* in the `Thread`. You can get a specific `Thread` by its ID, which will contain a list of all its `Messages`. You'll then grab the ID of the last `Message` in that list.
+
+        <CodeBlocks>
+        ```python
+        # Get the full thread object to access its messages
+        thread_details = client.threads.get(thread_to_reply_to.thread_id)
+
+        # The last message in the list is the one we want to reply to
+        last_message = thread_details.messages[-1]
+        message_id_to_reply_to = last_message.message_id
+        ```
+        ```typescript
+        // Get the full thread object to access its messages
+        const threadDetails = await client.threads.get('thread_id');
+
+        // The last message in the array is the one we want to reply to
+        const lastMessage = threadDetails.messages[threadDetails.messages.length - 1];
+        const messageIdToReplyTo = lastMessage.message_id;
+        ```
+        </CodeBlocks>
+    </Step>
+    <Step title="3. Send the Reply and Update Labels">
+        Now that you have the `message_id` to reply to, you can send your agent's response. It's also a best practice to update the `Labels` on the original `Message` at the same time, removing the `unreplied` `Label` and adding a `replied` `Label` to prevent the agent from replying to the same message twice.
+
+        <CodeBlocks>
+        ```python
+        # Send the reply
+        client.inboxes.messages.reply(
+            inbox_id="support@agentmail.to",
+            message_id=message_id_to_reply_to,
+            text="This is our agent's helpful reply!"
+        )
+
+        # Update the labels on the original message
+        client.inboxes.messages.update(
+            inbox_id="support@agentmail.to",
+            message_id=message_id_to_reply_to,
+            add_labels=["replied"],
+            remove_labels=["unreplied"]
+        )
+        ```
+        ```typescript
+        // Send the reply
+        await client.inboxes.messages.reply("support@agentmail.to", messageIdToReplyTo, {
+            text: "This is our agent's helpful reply!",
+        });
+
+        // Update the labels on the original message
+        await client.inboxes.messages.update("support@agentmail.to", messageIdToReplyTo, {
+            addLabels: ["replied"],
+            removeLabels: ["unreplied"],
+        });
+        ```
+        </CodeBlocks>
+    </Step>
+
+</Steps>
+
+<Callout intent="success" title="Real-Time Processing with Webhooks">
+For production applications, polling is inefficient. The best way to handle incoming replies is to use `Webhooks`. This allows AgentMail to notify your agent instantly when a new `Message` arrives, so you can reply in real-time.
+
+[**Learn how to set up `Webhooks` →**](/overview)
+
+</Callout>
+
+---
+host on Vercel using the CLI for a multi-tenant SaaS platform as new project if needed 
+
+--
+
+ 
