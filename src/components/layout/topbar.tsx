@@ -46,9 +46,7 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
                   organizationPreviewSecondaryIdentifier: "text-muted-foreground",
                 },
               }}
-              afterCreateOrganizationUrl="/:slug"
-              afterSelectOrganizationUrl="/:slug"
-              afterLeaveOrganizationUrl="/"
+              hidePersonal={true}
             />
           </div>
 
@@ -89,7 +87,6 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
                 userButtonTrigger: "rounded-lg",
               },
             }}
-            afterSignOutUrl="/"
           />
         </div>
       </div>

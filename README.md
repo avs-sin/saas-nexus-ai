@@ -100,7 +100,21 @@ convex/
    AGENTMAIL_INBOX_ID=nexus-inbound@lexiesevents.com
    ```
 
-5. Initialize Convex:
+5. **Configure Clerk JWT Template for Convex** (REQUIRED):
+   
+   a. Go to [Clerk Dashboard](https://dashboard.clerk.com) → JWT Templates
+   
+   b. Click "New template" → Select "Convex"
+   
+   c. Copy your Convex Deployment URL (from `.env.local`)
+   
+   d. The template will be named "convex" automatically
+   
+   e. Save the template
+   
+   This allows Clerk to generate authentication tokens for Convex.
+
+6. Initialize Convex:
    ```bash
    npx convex dev
    ```

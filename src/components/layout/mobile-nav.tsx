@@ -95,9 +95,7 @@ export function MobileNav({ orgSlug, open, onClose }: MobileNavProps) {
                 organizationPreviewSecondaryIdentifier: "text-muted-foreground",
               },
             }}
-            afterCreateOrganizationUrl="/:slug"
-            afterSelectOrganizationUrl="/:slug"
-            afterLeaveOrganizationUrl="/"
+            hidePersonal={true}
           />
         </div>
 

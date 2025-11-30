@@ -46,7 +46,6 @@ export default async function HomePage() {
                     avatarBox: "h-9 w-9",
                   },
                 }}
-                afterSignOutUrl="/"
               />
             </SignedIn>
           </nav>
@@ -115,7 +114,7 @@ export default async function HomePage() {
                   footer: "hidden",
                 },
               }}
-              afterCreateOrganizationUrl="/:slug"
+              routing="hash"
               skipInvitationScreen={true}
             />
           </div>
