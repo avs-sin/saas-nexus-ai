@@ -1,18 +1,32 @@
 import { notFound } from "next/navigation";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
 
-interface CatchAllPageProps {
+interface TenantPageProps {
   params: Promise<{ orgSlug: string; catchAll?: string[] }>;
 }
 
 // Valid routes that will be implemented later
 const validRoutes = ["inventory", "orders", "warehouses", "settings"];
 
-export default async function CatchAllPage({ params }: CatchAllPageProps) {
+export default async function TenantPage({ params }: TenantPageProps) {
   const { catchAll } = await params;
   
-  // If no catchAll, this shouldn't be hit (root page handles it)
+  // If no catchAll (root path), show dashboard
   if (!catchAll || catchAll.length === 0) {
-    notFound();
+    return (
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Here&apos;s an overview of your operations.
+          </p>
+        </div>
+
+        {/* Dashboard Widgets */}
+        <DashboardContent />
+      </div>
+    );
   }
 
   const rootPath = catchAll[0];
@@ -65,4 +79,3 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
     </div>
   );
 }
-
