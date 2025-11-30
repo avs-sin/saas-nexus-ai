@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireTenantId, getCurrentClerkUserId } from "./helpers/tenantScope";
+import { requireTenantId, getCurrentTenantId, getCurrentClerkUserId } from "./helpers/tenantScope";
 
 /**
  * Get recent activity for the current tenant
@@ -8,7 +8,13 @@ import { requireTenantId, getCurrentClerkUserId } from "./helpers/tenantScope";
 export const getRecent = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const tenantId = await requireTenantId(ctx);
+    const tenantId = await getCurrentTenantId(ctx);
+    
+    // Return empty array if no tenant yet (still syncing)
+    if (!tenantId) {
+      return [];
+    }
+    
     const limit = args.limit ?? 10;
     
     const activities = await ctx.db

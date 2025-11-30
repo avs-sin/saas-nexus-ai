@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireTenantId } from "./helpers/tenantScope";
+import { requireTenantId, getCurrentTenantId } from "./helpers/tenantScope";
 
 const locationValidator = v.object({
   address: v.string(),
@@ -51,7 +51,17 @@ export const get = query({
 export const getStats = query({
   args: {},
   handler: async (ctx) => {
-    const tenantId = await requireTenantId(ctx);
+    const tenantId = await getCurrentTenantId(ctx);
+    
+    // Return default stats if no tenant yet (still syncing)
+    if (!tenantId) {
+      return {
+        totalWarehouses: 0,
+        activeWarehouses: 0,
+        totalCapacity: 0,
+        avgUtilization: 0,
+      };
+    }
     
     const warehouses = await ctx.db
       .query("warehouses")
