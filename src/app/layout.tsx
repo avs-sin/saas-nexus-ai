@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,32 +27,38 @@ export default function RootLayout({
   return (
     <ClerkProvider
       appearance={{
-        baseTheme: dark,
         variables: {
-          colorPrimary: "#f97316",
-          colorBackground: "#09090b",
-          colorInputBackground: "#18181b",
-          colorInputText: "#fafafa",
+          colorPrimary: "#171717",
+          colorBackground: "#ffffff",
+          colorInputBackground: "#fafafa",
+          colorInputText: "#171717",
         },
         elements: {
-          formButtonPrimary: "bg-orange-500 hover:bg-orange-600",
-          card: "bg-zinc-900 border-zinc-800",
-          headerTitle: "text-zinc-100",
-          headerSubtitle: "text-zinc-400",
-          socialButtonsBlockButton: "bg-zinc-800 border-zinc-700 text-zinc-100 hover:bg-zinc-700",
-          formFieldLabel: "text-zinc-300",
-          formFieldInput: "bg-zinc-800 border-zinc-700 text-zinc-100",
-          footerActionLink: "text-orange-500 hover:text-orange-400",
-          identityPreviewText: "text-zinc-300",
-          identityPreviewEditButton: "text-orange-500",
+          formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+          card: "bg-card border-border shadow-sm",
+          headerTitle: "text-foreground",
+          headerSubtitle: "text-muted-foreground",
+          socialButtonsBlockButton: "bg-secondary border-border text-foreground hover:bg-accent",
+          formFieldLabel: "text-foreground",
+          formFieldInput: "bg-background border-input text-foreground",
+          footerActionLink: "text-primary hover:text-primary/80",
+          identityPreviewText: "text-muted-foreground",
+          identityPreviewEditButton: "text-primary",
         },
       }}
     >
-      <html lang="en" className="dark">
+      <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-950 text-zinc-100`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

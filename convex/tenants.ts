@@ -1,6 +1,17 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireAuth, requireTenantId, getOrCreateTenant } from "./helpers/tenantScope";
+import { requireAuth, requireTenantId, getCurrentTenantId, getOrCreateTenant } from "./helpers/tenantScope";
+
+/**
+ * Check if the current tenant exists (doesn't throw)
+ */
+export const exists = query({
+  args: {},
+  handler: async (ctx) => {
+    const tenantId = await getCurrentTenantId(ctx);
+    return tenantId !== null;
+  },
+});
 
 /**
  * Get the current tenant's information

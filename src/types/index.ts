@@ -1,3 +1,6 @@
+// Re-export NexusPlan types
+export * from "./nexusplan";
+
 // User roles within a tenant
 export type UserRole = "admin" | "manager" | "operator" | "viewer";
 

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { userRoleValidator } from "./schema";
-import { requireAuth, requireTenantId, getCurrentClerkUserId } from "./helpers/tenantScope";
+import { requireAuth, requireTenantId, getCurrentTenantId, getCurrentClerkUserId } from "./helpers/tenantScope";
 
 /**
  * Get the current user's profile for the current tenant
@@ -12,7 +12,8 @@ export const getCurrent = query({
     const clerkUserId = await getCurrentClerkUserId(ctx);
     if (!clerkUserId) return null;
     
-    const tenantId = await requireTenantId(ctx);
+    const tenantId = await getCurrentTenantId(ctx);
+    if (!tenantId) return null;
     
     const user = await ctx.db
       .query("users")
@@ -31,7 +32,8 @@ export const getCurrent = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const tenantId = await requireTenantId(ctx);
+    const tenantId = await getCurrentTenantId(ctx);
+    if (!tenantId) return null;
     
     const users = await ctx.db
       .query("users")
@@ -50,10 +52,22 @@ export const syncUser = mutation({
     email: v.string(),
     name: v.string(),
     imageUrl: v.optional(v.string()),
+    tenantId: v.optional(v.id("tenants")), // Optional: can be passed from syncTenant result
   },
   handler: async (ctx, args) => {
     const { clerkUserId } = await requireAuth(ctx);
-    const tenantId = await requireTenantId(ctx);
+    
+    // Use provided tenantId, or try to get it from context
+    let tenantId = args.tenantId;
+    if (!tenantId) {
+      tenantId = await requireTenantId(ctx);
+    }
+    
+    // Validate that the tenant exists
+    const tenant = await ctx.db.get(tenantId);
+    if (!tenant) {
+      throw new Error("Tenant not found. User must be part of an organization.");
+    }
     
     const now = Date.now();
     

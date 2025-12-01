@@ -35,31 +35,28 @@ export function TenantSync() {
     
     if (hasSynced) return;
 
-    // Sync tenant data
+    // Sync tenant first, then user (user sync requires tenant to exist)
     syncTenant({
       orgId: organization.id,
       name: organization.name,
       slug: organization.slug || organization.id,
     })
+      .then((tenantId) => {
+        // Now sync user after tenant exists, passing the tenantId directly
+        return syncUser({
+          email: user.primaryEmailAddress?.emailAddress || "",
+          name: user.fullName || user.firstName || "User",
+          imageUrl: user.imageUrl,
+          tenantId, // Pass the tenantId from syncTenant result
+        });
+      })
       .then(() => setHasSynced(true))
       .catch((error) => {
         // Only log non-auth errors
         if (!error.message?.includes("Not authenticated")) {
-          console.error("Failed to sync tenant:", error);
+          console.error("Failed to sync:", error);
         }
       });
-
-    // Sync user data
-    syncUser({
-      email: user.primaryEmailAddress?.emailAddress || "",
-      name: user.fullName || user.firstName || "User",
-      imageUrl: user.imageUrl,
-    }).catch((error) => {
-      // Only log non-auth errors
-      if (!error.message?.includes("Not authenticated")) {
-        console.error("Failed to sync user:", error);
-      }
-    });
   }, [
     organization,
     user,
