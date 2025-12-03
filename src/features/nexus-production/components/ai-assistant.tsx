@@ -152,3 +152,9 @@ export function ProductionAIAssistant({ isOpen, onClose, data }: ProductionAIAss
   );
 }
 
+
+
+
+
+
+

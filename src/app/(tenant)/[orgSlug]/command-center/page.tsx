@@ -6,3 +6,9 @@ export default function CommandCenterPage() {
   return <SuggestionInbox />;
 }
 
+
+
+
+
+
+

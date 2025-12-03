@@ -342,3 +342,9 @@ function PayloadDetails({ type, payload }: { type: SuggestionType; payload: any 
   }
 }
 
+
+
+
+
+
+
